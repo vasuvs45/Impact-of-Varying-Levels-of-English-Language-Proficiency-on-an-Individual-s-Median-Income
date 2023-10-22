@@ -1,0 +1,295 @@
+---
+title: "ProjectEDA"
+author: "Vasu"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r}
+#install.packages("reshape2")
+
+```
+
+
+```{r}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+
+#library(plotly)
+
+```
+
+```{r}
+transformed_df = read.csv("tranformed.csv")
+#transformed_df
+```
+
+```{r}
+names(transformed_df)
+```
+
+
+```{r}
+transformed_df$ENG <- as.factor(transformed_df$ENG)
+transformed_df$SEX <- as.factor(transformed_df$SEX)
+transformed_df$Graduate <- as.factor(transformed_df$Graduate)
+class(transformed_df$ENG)
+class(transformed_df$SEX)
+class(transformed_df$Graduate)
+```
+
+```{r}
+transformed_df$English <- as.factor(ifelse(transformed_df$ENG == 0, "Only English",
+                                                  ifelse(transformed_df$ENG == 1, "Very well",
+                                                         ifelse(transformed_df$ENG == 2, "Well",
+                                                         ifelse(transformed_df$ENG == 3, "Not Well",
+                                                                ifelse(transformed_df$ENG == 4, "Not Not at all",
+                                                                       "Not at all"))))))
+#names(transformed_df)
+
+transformed_df$Gender <- as.factor(ifelse(transformed_df$SEX == 1, "Male",
+                                                  ifelse(transformed_df$SEX == 2, "Female","no")))
+```
+
+
+```{r}
+income_eng <- transformed_df[, c("PINCP", "English")]
+```
+
+
+```{r}
+
+income_eng_mean_median <- income_eng %>%
+  group_by(English) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_eng_mean_median
+```
+
+```{r}
+income_eng_mean_median
+```
+
+
+
+```{r}
+
+ggplot(income_eng_mean_median, aes(x = English, y = median_income, fill = English)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "English Proficiency") +
+  scale_x_discrete(labels = c("Only English", "Very well", "Well",
+                              "Not well", "Not at all")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+   labs(title = "Median Income by English Proficiency")+
+   xlab("Ability to Speak English")+
+   ylab("Median Income ($)")
+
+ggplot(income_eng_mean_median, aes(x = English, y = mean_income, fill = English)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete("English Proficiency") +
+  scale_x_discrete(labels = c("Only English", "Very well", "Well",
+                              "Not well", "Not at all")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by English Proficiency")+
+  xlab("Ability to Speak English")+
+  ylab("Median Income ($)")
+
+
+```
+```{r}
+income_grad <- transformed_df[, c("PINCP", "Graduate")] 
+
+income_graduation <- income_grad %>%
+  group_by(Graduate) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_graduation
+```
+```{r}
+class(income_graduation$Graduate)
+```
+
+
+```{r}
+income_graduation <- income_grad %>%
+  group_by(Graduate) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+
+income_graduation$Graduate <- factor(income_graduation$Graduate, levels = c("0", "1"), labels = c("Less than Bachelor", "Bachelor's or more"))
+
+ggplot(income_graduation, aes(x = Graduate, y = median_income, fill = Graduate)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Education Level")+
+  scale_x_discrete(labels = c("No Bachelor's", "Bachelor's or more"))+
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  ) +
+  labs(title = "Median Income by Educational Attainment",
+       fill = "Graduate")+
+   xlab("Degree Holding Status")+
+   ylab("Median Income ($)")
+
+
+ggplot(income_graduation, aes(x = Graduate, y = mean_income, fill = Graduate)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Education Level") +
+  scale_x_discrete(labels = c("No Bachelor's", "Bachelor's or more"))+
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by Educational Attainment",
+       fill = "Graduate")+
+   xlab("Degree Holding Status")+
+   ylab("Median Income ($)")
+```
+
+```{r}
+income_marital_status <- transformed_df[, c("PINCP", "married")] 
+
+income_marital_status <- income_marital_status %>%
+  group_by(married) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_marital_status$married <- factor(income_marital_status$married, levels = c("0", "1"), labels = c("Single", "Married"))
+income_marital_status
+```
+
+```{r}
+
+ggplot(income_marital_status, aes(x = married, y = mean_income, fill = married)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Marital Status") +
+  scale_x_discrete(labels = c("Single", "Married")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by Marital Status")+
+  xlab("Marital Status")+
+  ylab("Median Income ($)")
+
+
+ggplot(income_marital_status, aes(x = married, y = median_income, fill = married)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Marital Status") +
+  scale_x_discrete(labels = c("Single", "Married")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Marital Status")+
+  xlab("Marital Status")+
+  ylab("Median Income ($)")
+```
+
+```{r}
+income_gender <- transformed_df[, c("PINCP", "Gender")] 
+
+income_graduation <- income_gender %>%
+  group_by(Gender) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_graduation
+```
+
+```{r}
+ggplot(income_graduation, aes(x = Gender, y = median_income, fill = Gender)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete() +
+  scale_x_discrete(labels = c("Female", "Male")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Gender")+
+  xlab("Gender")+
+  ylab("Median Income ($)")
+
+```
+
+
+
+```{r}
+ggplot(transformed_df, aes(x = transformed_df$AGE, y = transformed_df$PINCP, color = transformed_df$AGE)) + 
+  geom_point() + 
+  labs(title = "Age vs. Income", x = "Age", y = "Income")
+```
+
+```{r}
+subset_data_profession <- transformed_df[, c("PINCP", "Managers", "Business", "Financial", "IT", "Engineering", "Science", "Coucelling", "Legal", "Education", "Entertainment", "Medical", "HealthCare", "PRT", "EATERY", "CLN", "PRS", "Sales", "Official", "FFF", "CON", "EXT", "RPR", "Production", "TRN", "MIL")]
+
+subset_melted_data <- melt(subset_data_profession,id.vars = "PINCP", variable.name = "profession")
+subset_melted_data <-subset(subset_melted_data,value == 1)
+subset_melted_data <- subset_melted_data %>% rename(income = PINCP)
+subset_melted_data
+income_by_profession <- aggregate(income ~ profession, subset_melted_data, median)
+```
+
+
+```{r}
+ggplot(income_by_profession, aes(x = profession, y = income, fill = profession)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Profession") +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.y = element_text(angle = 0, hjust = 1, size = 8), # change the size of y-axis text
+    axis.text.x = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  ) +
+  coord_flip() +
+  labs(title = "Median Income by Professions", x = "Professions", y = "Median Income($)")
+   
+
+
+```
+
+
+```{r}
+subset_data_race <- transformed_df[, c("PINCP", "RACWHT", "RACBLK", "RACPI", "RACNH","RACAIAN","RACSOR","RACASN")]
+subset_melted_data_race <- melt(subset_data_race,id.vars = "PINCP", variable.name = "race")
+subset_melted_data_race <-subset(subset_melted_data_race,value == 1)
+#income_by_race <- aggregate(PINCP ~ race, subset_melted_data_race, mean)
+subset_melted_data_race <- subset_melted_data_race %>% rename(income = PINCP)
+subset_melted_data_race
+income_by_race <- aggregate(income ~ race, subset_melted_data_race, median)
+```
+
+```{r}
+ggplot(income_by_race, aes(x = race, y = income, fill = race)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(labels = c("White", "Black or African American","Pacific Islanders","Native Hawaiian","Native Alaskan","Other","Asian" )) +
+  scale_fill_discrete(name = "Race",labels = c("White", "Black or African American","Pacific Islanders","Native Hawaiian","Native Alaskan","Other","Asian" ))  +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Race")+
+  xlab("Race")+
+  ylab("Median Income ($)")
+```
+
+
+

@@ -1,0 +1,562 @@
+---
+title: "STATSPROJECT"
+author: "KIRAN RANGWANII"
+date: "2023-04-14"
+output:
+  word_document: default
+  html_document: default
+---
+##Reading data
+
+##For analysis Perspective, better to go ahead with shorter Names only. 
+# colnames(dataframe) <- c("Income", "Age","White recode",
+#                          "Black or African American recode","Marital status","SEX","Educational attainment",
+#                          "State","English Speaking Ability","Pacific Islander recode","Native Hawaiian recode",
+#                          "American Indiana Alaska Native",
+#                          "other race recode","Asian recode","Standard Occupational Classification")
+
+```{r}
+dataframe = read.csv("RAW-DATA.csv")
+```
+
+
+```{r}
+dim(dataframe)  
+dataframe <- subset(dataframe, select = -X)
+colnames(dataframe)
+
+```
+###Data cleaning
+Making the data more efficient for our analysis
+
+```{r}
+dataframe<-subset(dataframe, POWSP!="N")
+dim(dataframe)
+dataframe <- subset(dataframe, POWSP < "072")
+dim(dataframe)
+dataframe<-subset(dataframe, SOCP!="N")
+dim(dataframe)
+dataframe <- subset(dataframe, PINCP >= 0)
+```
+####RECODING
+###Recoding Marital Status to dummy variables
+Married = 1 or else 0
+Unmarried : rest of the categories as 1 and married as 0
+```{r}
+dataframe$married <- as.factor(ifelse(dataframe$MAR==1, 1, 0))
+
+dataframe$unmarried <- as.factor(ifelse(dataframe$MAR %in% c(2,3,4,5), 1, 0))
+
+colnames(dataframe)
+
+```
+
+```
+###We  recode ABILITY TO SPEAK ENGLISH to dummy variables as it's our variable of interest
+$OnlyEnglish = 0
+Very_well = 1
+Well = 2
+Not_well = 3
+Not_at_all = 4
+```
+
+```{r}
+dataframe$English <- as.factor(ifelse(dataframe$ENG == 0, "Only English",
+                                                  ifelse(dataframe$ENG == 1, "Very well",
+                                                         ifelse(dataframe$ENG == 2, "Well",
+                                                         ifelse(dataframe$ENG == 3, "Not Well",
+                                                                ifelse(dataframe$ENG == 4, " Not at all",
+                                                                       "Not at all"))))))
+```
+#Recoding Gender 1: male, 2:female
+```{r}
+dataframe$Gender <- as.factor(ifelse(dataframe$SEX == 1, "Male",
+                                                  ifelse(dataframe$SEX == 2, "Female","no")))
+```
+
+
+#Recoding EDUCATIONAL ATTAINMENT
+##Considering values from 12th grade or higher, not considering values before 12th grade
+##Here we choose Bachelors and above as one category
+```{r}
+# Create a new data frame with values from 16 to 24 in the SCHL column
+dataframe <- subset(dataframe, SCHL >= 15 & SCHL <= 24 & SCHL!=17)
+dataframe$NoBachelors <- as.factor(ifelse(dataframe$SCHL %in% c(15, 16,18,19,20),1,0))
+
+dataframe$Bachelors <-as.factor(ifelse(dataframe$SCHL %in% c(21,22,23,24),1,0))
+
+colnames(dataframe)
+
+```
+##Occupation recode to ddummy variables
+##We group records that fall under same unique code
+Some columns are not obvious so here's what they mean :
+
+PRT : Protective Services
+EATERY : Food Service
+CLN : Maintenance
+PRS : Personal Care
+Official : Administrative
+FFF : Agricultural
+CON : Construction
+EXT : Extraction
+RPR : Repairs
+TRN : Transport
+MIL : Military
+```{r}
+dataframe$Managers=     ifelse(grepl("^11", dataframe$SOCP),1,0)
+dataframe$Business=     ifelse(grepl("^131", dataframe$SOCP),1,0)
+dataframe$Financial=   		as.factor(ifelse(grepl("^132", dataframe$SOCP),1,0))
+dataframe$IT=          		as.factor(ifelse(grepl("^15", dataframe$SOCP),1,0))
+dataframe$Engineering= 		as.factor(ifelse(grepl("^17", dataframe$SOCP), 1,0))
+dataframe$Science=     		as.factor(ifelse(grepl("^19", dataframe$SOCP), 1,0))
+dataframe$Coucelling=  		as.factor(ifelse(grepl("^21", dataframe$SOCP), 1,0))
+dataframe$Legal=       		as.factor(ifelse(grepl("^23", dataframe$SOCP), 1,0))
+dataframe$Education=   		as.factor(ifelse(grepl("^25", dataframe$SOCP), 1,0))
+dataframe$Entertainment=	as.factor(ifelse(grepl("^27", dataframe$SOCP), 1,0))
+dataframe$Medical=     		as.factor(ifelse(grepl("^29", dataframe$SOCP), 1,0))
+dataframe$HealthCare=  		as.factor(ifelse(grepl("^31", dataframe$SOCP), 1,0))
+dataframe$PRT=         		as.factor(ifelse(grepl("^33", dataframe$SOCP), 1,0))
+dataframe$EATERY=      		as.factor(ifelse(grepl("^35", dataframe$SOCP), 1,0))
+dataframe$CLN=         		as.factor(ifelse(grepl("^37", dataframe$SOCP), 1,0))
+dataframe$PRS=         		as.factor(ifelse(grepl("^39", dataframe$SOCP), 1,0))
+dataframe$Sales=       		as.factor(ifelse(grepl("^41", dataframe$SOCP), 1,0))
+dataframe$Official=    		as.factor(ifelse(grepl("^43", dataframe$SOCP), 1,0))
+dataframe$FFF=         		as.factor(ifelse(grepl("^45", dataframe$SOCP), 1,0))
+dataframe$CON=         		as.factor(ifelse(grepl("^474", dataframe$SOCP),1,0))
+dataframe$EXT=         		as.factor(ifelse(grepl("^475", dataframe$SOCP),1,0))
+dataframe$RPR=         		as.factor(ifelse(grepl("^49", dataframe$SOCP), 1,0))
+dataframe$Production=  		as.factor(ifelse(grepl("^51", dataframe$SOCP), 1,0))
+dataframe$TRN=         		as.factor(ifelse(grepl("^53", dataframe$SOCP), 1,0))
+dataframe$MIL=         		as.factor(ifelse(grepl("^55", dataframe$SOCP), 1,0))
+dim(dataframe)
+colnames(dataframe)
+class(dataframe$MIL)
+```
+##As for state variable, we will only retain 50 states of the United States
+##State
+##072,166,251,254,301,303,399,555 are other countries hence we do not select those
+
+```{r}
+us_states <- sprintf("%03d", 001:056)
+
+dataframe <- subset(dataframe, POWSP %in% us_states)
+colnames(dataframe)
+```
+##This will form our population. As for our sample we will select East code states and create dummy variables for those.
+#We will perform this part of recoding further down the project timeline
+
+## Converting integer to discrete values 
+
+```{r}
+dataframe$ENG <- as.factor(dataframe$ENG)
+dataframe$SEX <- as.factor(dataframe$SEX)
+dataframe$Bachelors <- as.factor(dataframe$Bachelors)
+```
+
+##Dependent variable log transformation
+Log transformation performed because taking the logarithm of income can help to reduce the impact of these extreme values and make the distribution of income more symmetrical and easier to work with.
+```{r}
+colnames(dataframe)
+hist(dataframe$PINCP,main="Before log Transformation",col = "RED")
+dataframe$transformed_income<-log(dataframe$PINCP+1)
+hist(dataframe$transformed_income,main="After log Transformation",col = "BLUE")
+write.csv(dataframe,file = "tranformed_v1.csv",row.names = FALSE)
+```
+
+```{r}
+dataframe = read.csv("tranformed_v1.csv")
+```
+```{r}
+colnames(dataframe)
+```
+##Checking for NA values
+```{r}
+sum(is.na(dataframe))
+dataframe <- na.omit(dataframe)
+nrow(dataframe)
+```
+
+###Exploratory Data Analysis
+```{r}
+library(ggplot2)
+library(reshape2)
+library(dplyr)
+```
+#creating a subset has columns income and english proficiency for building plot below
+
+```{r}
+income_eng <- dataframe[, c("PINCP", "English")]
+```
+```{r}
+income_eng_mean_median <- income_eng %>%
+  group_by(English) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_eng_mean_median
+```
+```{r}
+ggplot(income_eng_mean_median, aes(x = English, y = median_income, fill = English)) +
+  labs(x = "Ability to Speak English", y = "Median Income ($)") +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete() +
+  scale_x_discrete(labels = c("Not at all", "Not Well", "Only English", "Very Well", "Well")) +
+  theme(
+	panel.background = element_rect(fill = "black"),
+	axis.text.y = element_text(angle = 0, hjust = 1, size = 8), 
+  axis.text.x = element_text(angle = 90,size = 12),
+	axis.title = element_text(size = 14),
+	legend.position = "right"
+  )+
+   labs(title = "Median Income by English Proficiency")+
+  labs(x = "Ability to Speak English", y = "Median Income ($)") +
+   labs(fill = "English Proficiency")
+
+ggplot(income_eng_mean_median, aes(x = English, y = mean_income, fill = English)) +
+  labs(x = "Ability to Speak English", y = "Mean Income ($)") +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete() +
+  scale_x_discrete(labels = c("Not at all", "Not Well", "Only English", "Very Well", "Well")) +
+  theme(
+	panel.background = element_rect(fill = "black"),
+	axis.text.y = element_text(angle = 0, hjust = 1, size = 8),
+  axis.text.x = element_text(angle = 90,size = 12),
+	axis.title = element_text(size = 14),
+	legend.position = "right"
+  )+
+  labs(title = "Mean Income by English Proficiency")+
+  labs(x = "Ability to Speak English", y = "Mean Income ($)") +
+   labs(fill = "English Proficiency")
+```
+###creating a subset that has columns income and education : Bachelors  for building plot below
+
+```{r}
+income_grad <- dataframe[, c("PINCP", "Bachelors")] 
+
+income_graduation <- income_grad %>%
+  group_by(Bachelors) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_graduation
+```
+
+```{r}
+income_graduation <- income_grad %>%
+  group_by(Bachelors) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+
+income_graduation$Bachelors <- factor(income_graduation$Bachelors, levels = c("0", "1"), labels = c("Less than Bachelor", "Bachelor's or more"))
+```
+
+
+```{r}
+ggplot(income_graduation, aes(x = Bachelors, y = median_income, fill = Bachelors)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Education Level")+
+  scale_x_discrete(labels = c("No Bachelor's", "Bachelor's or more"))+
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.y = element_text(angle = 0, hjust = 1, size = 8), 
+    axis.text.x = element_text(angle = 90,size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  ) +
+  labs(title = "Median Income by Educational Attainment",
+       fill = "Graduate")+
+   xlab("Degree Holding Status")+
+   ylab("Median Income ($)")
+
+
+ggplot(income_graduation, aes(x = Bachelors, y = mean_income, fill = Bachelors)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Education Level") +
+  scale_x_discrete(labels = c("No Bachelor's", "Bachelor's or more"))+
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.y = element_text(angle = 0, hjust = 1, size = 8), # change the size of y-axis text
+    axis.text.x = element_text(angle = 90,size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by Educational Attainment",
+       fill = "Bachelors")+
+   xlab("Degree Holding Status")+
+   ylab("Median Income ($)")
+
+
+
+
+
+```
+###creating a subset that has columns income and Marital status : married  for building plot below
+
+```{r}
+income_marital_status <- dataframe[, c("PINCP", "married")] 
+
+income_marital_status <- income_marital_status %>%
+  group_by(married) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_marital_status$married <- factor(income_marital_status$married, levels = c("0", "1"), labels = c("Single", "Married"))
+income_marital_status
+```
+
+```{r}
+ggplot(income_marital_status, aes(x = married, y = mean_income, fill = married)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Marital Status") +
+  scale_x_discrete(labels = c("Single", "Married")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by Marital Status")+
+  xlab("Marital Status")+
+  ylab("Median Income ($)")
+
+
+ggplot(income_marital_status, aes(x = married, y = median_income, fill = married)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Marital Status") +
+  scale_x_discrete(labels = c("Single", "Married")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Marital Status")+
+  xlab("Marital Status")+
+  ylab("Median Income ($)")
+```
+###creating a subset that has columns income and Gender for building plot below
+
+```{r}
+income_gender <- dataframe[, c("PINCP", "Gender")] 
+
+income_graduation <- income_gender %>%
+  group_by(Gender) %>%
+  summarize(mean_income = mean(PINCP), median_income = median(PINCP))
+income_graduation
+```
+```{r}
+ggplot(income_graduation, aes(x = Gender, y = median_income, fill = Gender)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete() +
+  scale_x_discrete(labels = c("Female", "Male")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Gender")+
+  xlab("Gender")+
+  ylab("Median Income ($)")
+
+ggplot(income_graduation, aes(x = Gender, y = mean_income, fill = Gender)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete() +
+  scale_x_discrete(labels = c("Female", "Male")) +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Mean Income by Gender")+
+  xlab("Gender")+
+  ylab("Mean Income ($)")
+
+
+```
+###creating a  plot  income and age 
+
+```{r}
+ggplot(dataframe, aes(x = dataframe$AGE, y = dataframe$PINCP, color = dataframe$AGE)) + 
+  geom_point() + 
+  labs(title = "Age vs. Income", x = "Age", y = "Income")
+```
+###creating a subset that has columns occupations and income
+
+
+```{r}
+subset_data_profession <- dataframe[, c("PINCP", "Managers", "Business", "Financial", "IT", "Engineering", "Science", "Coucelling", "Legal", "Education", "Entertainment", "Medical", "HealthCare", "PRT", "EATERY", "CLN", "PRS", "Sales", "Official", "FFF", "CON", "EXT", "RPR", "Production", "TRN", "MIL")]
+
+subset_melted_data <- melt(subset_data_profession,id.vars = "PINCP", variable.name = "profession")
+subset_melted_data <-subset(subset_melted_data,value == 1)
+subset_melted_data <- subset_melted_data %>% rename(income = PINCP)
+income_by_profession <- aggregate(income ~ profession, subset_melted_data, median)
+```
+```{r}
+ggplot(income_by_profession, aes(x = profession, y = income, fill = profession)) +
+  geom_bar(stat = "identity") +
+  scale_fill_discrete(name = "Profession") +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.y = element_text(angle = 0, hjust = 1, size = 8), # change the size of y-axis text
+    axis.text.x = element_text(angle = 90,size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  ) +
+  coord_flip() +
+  labs(title = "Median Income by Professions", x = "Professions", y = "Median Income($)")
+```
+###creating a subset that has columns race and income
+
+```{r}
+subset_data_race <- dataframe[, c("PINCP", "RACWHT", "RACBLK", "RACPI", "RACNH","RACAIAN","RACSOR","RACASN")]
+subset_melted_data_race <- melt(subset_data_race,id.vars = "PINCP", variable.name = "race")
+subset_melted_data_race <-subset(subset_melted_data_race,value == 1)
+#income_by_race <- aggregate(PINCP ~ race, subset_melted_data_race, mean)
+subset_melted_data_race <- subset_melted_data_race %>% rename(income = PINCP)
+
+income_by_race <- aggregate(income ~ race, subset_melted_data_race, median)
+```
+```{r}
+ggplot(income_by_race, aes(x = race, y = income, fill = race)) +
+  geom_bar(stat = "identity") +
+  scale_x_discrete(labels = c("White", "Black or African American","Pacific Islanders","Native Hawaiian","Native Alaskan","Other","Asian" )) +
+  scale_fill_discrete(name = "Race",labels = c("White", "Black or African American","Pacific Islanders","Native Hawaiian","Native Alaskan","Other","Asian" ))  +
+  theme(
+    panel.background = element_rect(fill = "black"),
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 12),
+    axis.text.y = element_text(size = 12),
+    axis.title = element_text(size = 14),
+    legend.position = "right"
+  )+
+  labs(title = "Median Income by Race")+
+  xlab("Race")+
+  ylab("Median Income ($)")
+```
+#MODEL 1 WITH ALL VARIABLES
+
+Removing married and NoBachelors as we don't need those{Unmarried and Bachelors cover all the values}
+
+```{r}
+model <- lm(transformed_income ~ ENG+AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP +Bachelors+unmarried+ Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL, data = dataframe,na.action=na.exclude)
+
+
+```
+
+```{r}
+summary(model)
+confint(model)
+anova(model)
+```
+
+```{r}
+par(mfrow=c(2,2))
+plot(model)
+```
+
+```{r}
+plot(model, which = 1)
+```
+```{r}
+install.packages("ggplot2", repos = "http://cran.us.r-project.org")
+install.packages("coefplot", repos = "http://cran.us.r-project.org")
+library(ggplot2)
+library(coefplot)
+```
+
+```{r}
+coefplot(model,color= )
+```
+
+#MODEL WITHOUT VARIABLE OF INTEREST : ENGLISH
+
+```{r}
+model_without_eng <- lm(transformed_income ~ AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP + unmarried + Bachelors + Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL, data = dataframe,na.action=na.exclude)
+```
+```{r}
+summary(model_without_eng)
+confint(model_without_eng)
+anova(model_without_eng)
+```
+
+##MODEL WITHOUT RACE
+```{r}
+model_without_RACE <- lm(transformed_income ~ ENG+AGEP + SEX + POWSP + unmarried+ Bachelors + Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL, data = dataframe,na.action=na.exclude)
+```
+
+
+```{r}
+summary(model_without_RACE)
+
+confint(model_without_RACE)
+anova(model_without_RACE)
+
+```
+##MODEL WITHOUT OCCUPATION
+```{r}
+model_without_occup <- lm(transformed_income ~ ENG+AGEP + SEX + POWSP  +RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH +unmarried + Bachelors, data = dataframe,na.action=na.exclude)
+
+```
+```{r}
+summary(model_without_occup)
+confint(model_without_occup)
+anova(model_without_occup)
+
+```
+##MODEL WITHOUT MARRAIGE
+```{r}
+model_without_mar <- lm(transformed_income ~ AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP  + Bachelors + Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL+ENG, data = dataframe,na.action=na.exclude)
+
+```
+```{r}
+summary(model_without_mar)
+confint(model_without_mar)
+anova(model_without_mar)
+
+
+```
+##MODEL WITHOUT EDUCATION
+```{r}
+model_without_edu <- lm(transformed_income ~ AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP   + unmarried  + Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL+ENG, data = dataframe,na.action=na.exclude)
+
+```
+```{r}
+summary(model_without_edu)
+confint(model_without_edu)
+anova(model_without_edu)
+
+
+```
+##MODEL WITH ONLY ENGLISH
+```{r}
+model_only_eng <- lm(transformed_income ~ENG , data = dataframe,na.action=na.exclude)
+summary(model_only_eng)
+confint(model_only_eng)
+anova(model_only_eng)
+
+```
+##MODEL WITH ONLY FEW OCCUPATIONS
+```{r}
+model_only_few_occu <- lm(transformed_income ~ ENG+AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP  + unmarried  + Bachelors + Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + Sales , data = dataframe,na.action=na.exclude)
+
+summary(model_only_few_occu)
+confint(model_only_few_occu)
+anova(model_only_few_occu)
+
+```
+##EAST COAST STATE SUBSET 
+```{r}
+state_subset_df<- dataframe[dataframe$POWSP %in% c("23", "33", "25", "44", "9","36","34","10","24","51","37","45", "13","12"), ]
+
+state_subset_df <- na.omit(state_subset_df)
+
+colnames(state_subset_df)
+nrow(state_subset_df)
+
+
+```
+```{r}
+model_state_sample <- lm(transformed_income ~ ENG+AGEP + SEX + RACWHT + RACAIAN + RACSOR + RACASN + RACBLK + RACNH + POWSP+unmarried+Bachelors+ Managers + Business + Financial + IT + Engineering + Science + Coucelling + Legal + Education + Entertainment + Medical + HealthCare + PRT + EATERY + CLN + PRS + Sales + Official + FFF + CON + EXT + RPR + Production + TRN + MIL, data = state_subset_df)
+
+```
+```{r}
+summary(model_state_sample)
+confint(model_state_sample)
+anova(model_state_sample)
+```
+
